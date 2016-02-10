@@ -79,7 +79,9 @@ class article(object):
             r=requests.get('https://scholar.google.com/scholar?q=%s' %self.urldoi+self.doi)
             time.sleep(60)
             sep='">Cited by'
-            self.citedby['number']='';self.citedby['url']=''
+            self.citedby['number']='';self.citedby['url']='';self.status='OK'
+            if r.text.find('CAPTCHA')!=-1:
+                self.status='CAPTCHA'
             if r.text.find(sep)!=-1:
                 rr=r.text.split(sep)
                 self.citedby['number']=rr[1].split('</a>')[0].strip()
