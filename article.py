@@ -66,7 +66,7 @@ class article(object):
     urldoi='http://dx.doi.org/'
     citedby=pd.Series()
     json=pd.Series()
-    def __init__(self,doi='10.1007/JHEP11(2013)011',citations=True,json=True,colciencias=False,\
+    def __init__(self,doi='10.1007/JHEP11(2013)011',citations=False,json=True,colciencias=False,\
                  impact_factor=True):
         if impact_factor and not colciencias:
             json=True
@@ -76,7 +76,7 @@ class article(object):
         #print 'TODO: JSON metadata here'
         
         if citations:
-            r=requests.get('https://scholar.google.com/scholar?q=%s' %self.urldoi+self.doi)
+            r=requests.get('https://scholar.google.com/scholar?q=%s' %self.urldoi+self.doi,verify=False)
             time.sleep(60)
             sep='">Cited by'
             self.citedby['number']='';self.citedby['url']='';self.status='OK'
@@ -113,6 +113,6 @@ class article(object):
         if impact_factor:
             self.impact_factor=ImpactFactor(self.issn)
 if __name__ == "__main__":                
-    a=article(doi='http://dx.doi.org/10.1103/PhysRevD.92.013005')
+    a=article(doi='http://dx.doi.org/10.1103/PhysRevD.92.013005',citations=True)
     print a.citedby.number
     print a.json.author.to_string
