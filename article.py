@@ -77,7 +77,7 @@ class article(object):
         
         if citations:
             r=requests.get('https://scholar.google.com/scholar?q=%s' %self.urldoi+self.doi)
-            time.sleep(2)
+            time.sleep(60)
             sep='">Cited by'
             self.citedby['number']='';self.citedby['url']=''
             if r.text.find(sep)!=-1:
