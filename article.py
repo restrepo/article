@@ -72,7 +72,7 @@ class article(object):
     journal.ranking['colciencias']=pd.Series()
     journal['Impact_Factor']=pd.Series()
     def __init__(self,doi='10.1007/JHEP11(2013)011',citations=False,metadata=True,colciencias=False,\
-                 quartil=False,impact_factor=False):
+                 quartil=False,impact_factor=False,google_scholar_delay=2):
         urldoi='http://dx.doi.org/'
         if quartil or colciencias:
             ranking=True
@@ -86,7 +86,7 @@ class article(object):
             ua = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2)\
                 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36'}       
             r=requests.get('https://scholar.google.com/scholar?q=%s' %doi,headers=ua,verify=False)
-            time.sleep(2)
+            time.sleep(google_scholar_delay)
             sep='">Cited by'
             self.article.citations['number']=''
             self.article.citations['url']=''
