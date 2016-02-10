@@ -92,7 +92,7 @@ class article(object):
             self.article.citations['url']=''
             self.article.citations['status']='OK'
             self.article.citations['html']=r.text
-            if r.text.find('CAPTCHA')!=-1:
+            if r.text.lower().find('captcha')!=-1:
                 self.article.citations.status='CAPTCHA'
                 print 'WARNING: Google Scholar bot protection actived. Citation search banned'
             if r.text.find(sep)!=-1:
