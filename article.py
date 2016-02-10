@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
 Module article: Fill article object from DOI
 json: from DOI API
@@ -11,6 +12,7 @@ import pandas as pd
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_colwidth',500)
+requests.packages.urllib3.disable_warnings()
 
 def google_search(q='hello world'):
     '''
@@ -63,56 +65,70 @@ class article(object):
     '''
     Obtain info from D0I
     '''
-    urldoi='http://dx.doi.org/'
-    citedby=pd.Series()
-    json=pd.Series()
-    def __init__(self,doi='10.1007/JHEP11(2013)011',citations=False,json=True,colciencias=False,\
-                 impact_factor=True):
+    article=pd.Series()
+    article['citations']=pd.Series()
+    journal=pd.Series() #self.article.journal.ranking.colciencias.issn
+    journal['ranking']=pd.Series()
+    journal.ranking['colciencias']=pd.Series()
+    journal['Impact_Factor']=pd.Series()
+    def __init__(self,doi='10.1007/JHEP11(2013)011',citations=False,metadata=True,colciencias=False,\
+                 quartil=False,impact_factor=False):
+        urldoi='http://dx.doi.org/'
+        if quartil or colciencias:
+            ranking=True
         if impact_factor and not colciencias:
-            json=True
+            metadata=True
             
-        self.doi=doi.replace(self.urldoi,'')
-        self.issn=''
-        #print 'TODO: JSON metadata here'
+        doi=doi.replace(urldoi,'')
+        self.journal.ranking.colciencias['ISSN']=''
         
         if citations:
-            r=requests.get('https://scholar.google.com/scholar?q=%s' %self.urldoi+self.doi,verify=False)
-            time.sleep(60)
+            ua = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2)\
+                AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36'}       
+            r=requests.get('https://scholar.google.com/scholar?q=%s' %doi,headers=ua,verify=False)
+            time.sleep(2)
             sep='">Cited by'
-            self.citedby['number']='';self.citedby['url']='';self.status='OK'
+            self.article.citations['number']=''
+            self.article.citations['url']=''
+            self.article.citations['status']='OK'
+            self.article.citations['html']=r.text
             if r.text.find('CAPTCHA')!=-1:
-                self.status='CAPTCHA'
+                self.article.citations.status='CAPTCHA'
+                print 'WARNING: Google Scholar bot protection actived. Citation search banned'
             if r.text.find(sep)!=-1:
                 rr=r.text.split(sep)
-                self.citedby['number']=rr[1].split('</a>')[0].strip()
-                self.citedby['url']='https://scholar.google.com%s' %rr[0].split('<a href="')[-1]
+                self.article.citations['number']=rr[1].split('</a>')[0].strip()
+                self.article.citations['url']='https://scholar.google.com%s' %rr[0].split('<a href="')[-1]
                 
-        if json:    
-            r=requests.get(self.urldoi+self.doi,\
+        if metadata:    
+            r=requests.get(urldoi+doi,\
                        headers ={'Accept': 'application/citeproc+json'})
             if r.status_code==200:
-                self.json=pd.Series(r.json())
-                self.json=keysdash2underscore(self.json)
-                for k in self.json.keys():
-                    if type(self.json[k])==dict:
-                        self.json[k]=pd.Series(self.json[k])
-                        self.json[k]=keysdash2underscore(self.json[k])
+                self.article=self.article.append(pd.Series(r.json()))
+                self.article=keysdash2underscore(self.article)
+                for k in self.article.keys():
+                    if type(self.article[k])==dict:
+                        self.article[k]=pd.Series(self.article[k])
+                        self.article[k]=keysdash2underscore(self.article[k])
                         
-                    if type(self.json[k])==list:
-                        if k=='author' or k=='funder' or k=='license' or k=='link':
-                            if self.json[k]:
-                                self.json[k]=pd.DataFrame(self.json[k])
+                    if type(self.article[k])==list:
+                        if k=='funder' or k=='license' or k=='link' or k=='author':
+                            if self.article[k]:
+                                self.article[k]=pd.DataFrame(self.article[k])
+        
                         if k=='subject' or k=='subtitle':
-                            if self.json[k]:
-                                self.json[k]=self.json[k][0]
-                #proper sub-Series for nested json keys...
+                            if self.article[k]:
+                                self.article[k]=self.article[k][0]
+                                
+
+        #TODO: fill self.journal Series with relevant metadata: ['id','name','abbreviation','ISSN'], etc
         if not colciencias:
-            if json:
-                self.issn=self.json.ISSN[0]
+            if metadata:
+                 self.journal.ranking.colciencias.ISSN=self.article.ISSN[0]
         #else: force issn colciencias
         if impact_factor:
-            self.impact_factor=ImpactFactor(self.issn)
+            self.journal.Impact_Factor=ImpactFactor(self.journal.ranking.colciencias.ISSN)
 if __name__ == "__main__":                
     a=article(doi='http://dx.doi.org/10.1103/PhysRevD.92.013005',citations=True)
-    print a.citedby.number
-    print a.json.author.to_string
+    print a.article.citations.number
+    print a.article.author
