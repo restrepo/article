@@ -44,7 +44,7 @@ def ImpactFactor(issn='1539-3755'):
         if IF:
             IF=IF.replace('\n','').split('impact factors:')
             if len(IF)>0:
-                IF=IF[1].split('. ISSN')[0].split(',') #always works for a string
+                IF=IF[0].split('. ISSN')[0].split(',') #always works for a string
                 IF=[ify.replace(')','').split('(') for ify in  IF]
                 if len(IF[0])==2:
                     ifdf=pd.DataFrame(IF,columns=['IF','Year'])
